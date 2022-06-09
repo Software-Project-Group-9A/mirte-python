@@ -120,6 +120,21 @@ class Robot():
             for sensor in keypad_sensors:
                 self.keypad_services[sensor] = rospy.ServiceProxy('/mirte/get_keypad_' + keypad_sensors[sensor]["name"], GetKeypad, persistent=True)
 
+        ''' 
+        # Services for phone sliders
+        if rospy.has_param("/mirte/phone_slider"):
+            phone_slider_services = rospy.get_param("/mirte/phone_slider")
+            self.phone_slider_services = {}
+            for sensor in phone_slider_services:
+                self.phone_slider_services[sensor] = rospy.ServiceProxy('/mirte/get_phone_slider_' + keypad_sensors[sensor]["name"], GetSliderValue, persistent=True)
+        '''
+
+        if rospy.has_param("/mirte/phone_slider"):
+            phone_sliders = rospy.get_param("/mirte/phone_slider")
+            self.phone_slider_subscribers = {}
+            for sensor in phone_sliders:
+                self.phone_slider_subscribers[sensor] = PhoneSliderSubscriber(phone_sliders[sensor]["name"])
+
         self.get_pin_value_service = rospy.ServiceProxy('/mirte/get_pin_value', GetPinValue, persistent=True)
         self.set_pin_value_service = rospy.ServiceProxy('/mirte/set_pin_value', SetPinValue, persistent=True)
 
@@ -221,6 +236,19 @@ class Robot():
         """
 
         value = self.get_pin_value_service(str(pin), "analog")
+        return value.data
+
+    def getSliderValue(self, slider):
+        """Gets the slider value of slider.
+
+        Parameters:
+            slider (str): The name of the slider as specified in the settings.
+
+        Returns:
+            int: Value of slider.
+        """
+
+        value = self.phone_slider_subscribers[slider].getValue()
         return value.data
 
     def setAnalogPinValue(self, pin, value):
@@ -345,6 +373,20 @@ class Robot():
     def _signal_handler(self, sig, frame):
         self.stop()
         sys.exit()
+
+class PhoneSliderSubscriber:
+    
+    def __init__(self, name):
+        self.name = name
+        self.value = Int32(0)
+        rospy.Subscriber('/mirte/phone_slider/' + name, Int32, self.callback)
+
+    def callback(self, data):
+        self.value = data
+
+    def getValue(self):
+        return self.value
+
 
 # We need a special function to initiate the Robot() because the main.py need to call the
 # init_node() (see: https://answers.ros.org/question/266612/rospy-init_node-inside-imported-file/)
