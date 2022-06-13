@@ -120,15 +120,6 @@ class Robot():
             for sensor in keypad_sensors:
                 self.keypad_services[sensor] = rospy.ServiceProxy('/mirte/get_keypad_' + keypad_sensors[sensor]["name"], GetKeypad, persistent=True)
 
-        ''' 
-        # Services for phone sliders
-        if rospy.has_param("/mirte/phone_slider"):
-            phone_slider_services = rospy.get_param("/mirte/phone_slider")
-            self.phone_slider_services = {}
-            for sensor in phone_slider_services:
-                self.phone_slider_services[sensor] = rospy.ServiceProxy('/mirte/get_phone_slider_' + keypad_sensors[sensor]["name"], GetSliderValue, persistent=True)
-        '''
-
         if rospy.has_param("/mirte/phone_slider"):
             phone_sliders = rospy.get_param("/mirte/phone_slider")
             self.phone_slider_subscribers = {}
@@ -374,6 +365,8 @@ class Robot():
         self.stop()
         sys.exit()
 
+## PhoneSliderSubscriber subscribes to a topic and can be used to
+## save the last received value.
 class PhoneSliderSubscriber:
     
     def __init__(self, name):
