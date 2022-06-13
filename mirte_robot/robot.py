@@ -16,6 +16,7 @@ from geometry_msgs.msg import Twist
 from std_msgs.msg import Int32
 from std_msgs.msg import String
 from std_msgs.msg import Empty
+from sensor_msgs.msg import CompressedImage
 from mirte_msgs.msg import *
 
 from mirte_msgs.srv import *
@@ -119,6 +120,14 @@ class Robot():
             self.keypad_services = {}
             for sensor in keypad_sensors:
                 self.keypad_services[sensor] = rospy.ServiceProxy('/mirte/get_keypad_' + keypad_sensors[sensor]["name"], GetKeypad, persistent=True)
+
+        # Publishers for sensorlib ImageSubscriber instances
+        if rospy.has_param("/mirte/phone_image_output"):
+            phone_image_outputs = rospy.get_param("/mirte/phone_image_output")
+            self.phone_image_outputs = {}
+            # for each ImageSubscriber, create a publisher
+            for publisher in phone_image_outputs:
+                self.phone_image_outputs[publisher] = PhoneImageOutput(phone_image_outputs[sensor]["name"]);
 
         self.get_pin_value_service = rospy.ServiceProxy('/mirte/get_pin_value', GetPinValue, persistent=True)
         self.set_pin_value_service = rospy.ServiceProxy('/mirte/set_pin_value', SetPinValue, persistent=True)
@@ -345,6 +354,23 @@ class Robot():
     def _signal_handler(self, sig, frame):
         self.stop()
         sys.exit()
+
+## PhoneImageOutput is used to publish an image to ROS. In turn, a ImageSubscriber from mirtesensorlib
+## can then draw this published image to the smartphone screen.
+## Images are currently taken from the same folder as the mirte OLED images
+class PhoneImageOutput:
+    def __init__(self, name):
+        self.name = name
+        self.publisher = rospy.Publisher('/mirte/phone_image_output/' + name, CompressedImage, queue_size=10)
+
+    def setImage(self, imageName):
+        imageFile = open("/usr/local/src/mirte/mirte-oled-images/images/" + imageName + ".png")
+        imageMessage = CompressedImage()
+        msg.format = 'png'
+        msg.data = imageFile.read(image)
+        self.publisher.publish(imageMessage)
+        imageFile.close()
+
 
 # We need a special function to initiate the Robot() because the main.py need to call the
 # init_node() (see: https://answers.ros.org/question/266612/rospy-init_node-inside-imported-file/)
