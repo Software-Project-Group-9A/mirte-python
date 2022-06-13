@@ -14,6 +14,7 @@ import atexit
 import message_filters
 from geometry_msgs.msg import Twist
 from std_msgs.msg import Int32
+from std_msgs.msg import Bool
 from std_msgs.msg import String
 from std_msgs.msg import Empty
 from mirte_msgs.msg import *
@@ -124,7 +125,13 @@ class Robot():
             phone_sliders = rospy.get_param("/mirte/phone_slider")
             self.phone_slider_subscribers = {}
             for sensor in phone_sliders:
-                self.phone_slider_subscribers[sensor] = PhoneSliderSubscriber(phone_sliders[sensor]["name"])
+                self.phone_slider_subscribers[sensor] = TopicSubscriber('/mirte/phone_slider/' + phone_sliders[sensor]["name"], Int32)
+
+        if rospy.has_param("/mirte/phone_button"):
+            phone_buttons = rospy.get_param("/mirte/phone_button")
+            self.phone_button_subscribers = {}
+            for sensor in phone_buttons:
+                self.phone_button_subscribers[sensor] = TopicSubscriber('/mirte/phone_button/' + phone_buttons[sensor]["name"], Bool)
 
         self.get_pin_value_service = rospy.ServiceProxy('/mirte/get_pin_value', GetPinValue, persistent=True)
         self.set_pin_value_service = rospy.ServiceProxy('/mirte/set_pin_value', SetPinValue, persistent=True)
@@ -240,6 +247,19 @@ class Robot():
         """
 
         value = self.phone_slider_subscribers[slider].getValue()
+        return value.data
+
+    def getButtonValue(self, button):
+        """Gets the button value of button.
+
+        Parameters:
+            button (str): The name of the button as specified in the settings.
+
+        Returns:
+            int: Value of button.
+        """
+
+        value = self.phone_button_subscribers[button].getValue()
         return value.data
 
     def setAnalogPinValue(self, pin, value):
@@ -365,14 +385,13 @@ class Robot():
         self.stop()
         sys.exit()
 
-## PhoneSliderSubscriber subscribes to a topic and can be used to
+## TopicSubscriber subscribes to a topic and can be used to
 ## save the last received value.
-class PhoneSliderSubscriber:
+class TopicSubscriber:
     
-    def __init__(self, name):
-        self.name = name
-        self.value = Int32(0)
-        rospy.Subscriber('/mirte/phone_slider/' + name, Int32, self.callback)
+    def __init__(self, topic_name, messageType):
+        self.value = messageType()
+        rospy.Subscriber(topic_name, messageType, self.callback)
 
     def callback(self, data):
         self.value = data
