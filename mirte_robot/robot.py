@@ -232,6 +232,16 @@ class Robot():
         value = self.get_pin_value_service(str(pin), "analog")
         return value.data
 
+    def setPhoneImage(self, imageSubscriber, imageName):
+        """Shows an image on a ImageSubscriber located on a phone. 
+
+        Parameters:
+            imageSubscriber (str): The name of the ImageSubscriber as specified in the settings.
+            image (str): Image name as defined in the images folder of the mirte-oled-images repository (excl file extension).
+        """
+        self.phone_image_outputs[imageSubscriber].setImage(imageName)
+
+
     def setAnalogPinValue(self, pin, value):
         """Sets the output value of an analog pin (PWM).
 
