@@ -374,11 +374,21 @@ class PhoneImageOutput:
         self.publisher = rospy.Publisher('/mirte/phone_image_output/' + name, CompressedImage, queue_size=10)
 
     def setImage(self, imageName):
-        imageFile = open("/usr/local/src/mirte/mirte-oled-images/images/" + imageName + ".png")
-        imageMessage = CompressedImage()
+         """Shows an image on a ImageSubscriber located on a phone. 
+
+        Parameters:
+            imageSubscriber (str): The name of the ImageSubscriber as specified in the settings.
+            image (str): Image name as defined in the images folder of the mirte-oled-images repository (excl file extension).
+        """
+        # find image
+        imageFile = open("/usr/local/src/mirte/mirte-oled-images/images/" + imageName + ".png", "rb")
+        # create CompressedImage message
+        msg = CompressedImage()
         msg.format = 'png'
         msg.data = imageFile.read(image)
+        # publish
         self.publisher.publish(imageMessage)
+        # close image file
         imageFile.close()
 
 
