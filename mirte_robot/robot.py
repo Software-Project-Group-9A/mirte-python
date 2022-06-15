@@ -278,8 +278,8 @@ class Robot():
 
     def getImuLinearAcceleration(self, angle):
         imu = self.imu_sensor
-        q = imu.getValue().linear_acceleration
-        x, y, z = imu_math.euler_from_quaternion(q.x, q.y, q.z, q.w)
+        data = imu.getValue().linear_acceleration
+        x, y, z = data.x, data.y, data.z
         if angle == 'X':
             return x
         elif angle == 'Y':
@@ -291,8 +291,8 @@ class Robot():
 
     def getImuAngularVelocity(self, angle):
         imu = self.imu_sensor
-        q = imu.getValue().angular_velocity
-        x, y, z = imu_math.euler_from_quaternion(q.x, q.y, q.z, q.w)
+        data = imu.getValue().angular_velocity
+        x, y, z = data.x, data.y, data.z
         if angle == 'X':
             return x
         elif angle == 'Y':
@@ -304,7 +304,7 @@ class Robot():
 
     def getImuRotation(self, angle):
         imu = self.imu_sensor
-        q = imu.getValue().orientaiton
+        q = imu.getValue().orientation
         x, y, z = imu_math.euler_from_quaternion(q.x, q.y, q.z, q.w)
         if angle == 'X':
             return x
