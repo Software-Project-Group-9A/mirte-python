@@ -1,5 +1,7 @@
 import math
 
+# euler_from_quaternion funtion from: https://automaticaddison.com/how-to-convert-a-quaternion-into-euler-angles-in-python/
+
 
 def euler_from_quaternion(x, y, z, w):
     """
