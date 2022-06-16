@@ -145,7 +145,7 @@ class Robot():
                 self.phone_button_subscribers[sensor] = TopicSubscriber(
                     '/mirte/phone_button/' + phone_buttons[sensor]["name"], Bool)
 
-        if rospy.has_param("/mirte/gyro"):
+        if rospy.has_param("/mirte/imu"):
             self.imu_sensor = TopicSubscriber('mirte/gyro', Imu)
 
         self.get_pin_value_service = rospy.ServiceProxy(
