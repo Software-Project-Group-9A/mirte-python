@@ -376,7 +376,7 @@ class PhoneImageOutput:
         self.publisher = rospy.Publisher('/mirte/phone_image_output/' + name, CompressedImage, queue_size=10)
 
     def setImage(self, imageLocation):
-         """Shows an image on a ImageSubscriber located on a phone. 
+        """Shows an image on a ImageSubscriber located on a phone. 
 
         Parameters:
             imageSubscriber (str): The name of the ImageSubscriber as specified in the settings.
