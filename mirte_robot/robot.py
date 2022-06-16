@@ -233,13 +233,15 @@ class Robot():
         return value.data
 
     def setPhoneImage(self, imageSubscriber, imageName):
-        """Shows an image on a ImageSubscriber located on a phone. 
+        """Shows an image on an ImageSubscriber located on a phone. 
 
         Parameters:
             imageSubscriber (str): The name of the ImageSubscriber as specified in the settings.
-            image (str): Image name as defined in the images folder of the mirte-oled-images repository (excl file extension).
+            image (str): Image name as defined in the images folder of the mirte-oled-images repository (excl file extension). 
+            Image must be a png file.
         """
-        self.phone_image_outputs[imageSubscriber].setImage(imageName)
+        imageLocation = "/usr/local/src/mirte/mirte-oled-images/images/" + imageName + ".png"
+        self.phone_image_outputs[imageSubscriber].setImage(imageLocation)
 
 
     def setAnalogPinValue(self, pin, value):
@@ -373,21 +375,21 @@ class PhoneImageOutput:
         self.name = name
         self.publisher = rospy.Publisher('/mirte/phone_image_output/' + name, CompressedImage, queue_size=10)
 
-    def setImage(self, imageName):
+    def setImage(self, imageLocation):
          """Shows an image on a ImageSubscriber located on a phone. 
 
         Parameters:
             imageSubscriber (str): The name of the ImageSubscriber as specified in the settings.
-            image (str): Image name as defined in the images folder of the mirte-oled-images repository (excl file extension).
+            image (str): location of image file. Must be png file.
         """
-        # find image
-        imageFile = open("/usr/local/src/mirte/mirte-oled-images/images/" + imageName + ".png", "rb")
+        # open image file
+        imageFile = open(imageLocation, "rb")
         # create CompressedImage message
         msg = CompressedImage()
         msg.format = 'png'
         msg.data = imageFile.read(image)
         # publish
-        self.publisher.publish(imageMessage)
+        self.publisher.publish(msg)
         # close image file
         imageFile.close()
 
