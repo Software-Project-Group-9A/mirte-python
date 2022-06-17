@@ -277,20 +277,6 @@ class Robot():
         value = self.phone_button_subscribers[button].getValue()
         return value.data
 
-    def setFlashlight(self, flashlight, state):
-        """Turns the flashlight on or off
-
-        Parameters:
-            flashlight (str): The name of the sensor as defined in the configuration.
-            state (bool): The state in which the flashlight should change.
-                          true is on, false is off.
-
-        Returns:
-            bool: True if set successfully.
-        """
-        flash = self.phone_flashlight
-        return flash.publish(state)
-
     def setAnalogPinValue(self, pin, value):
         """Sets the output value of an analog pin (PWM).
 

@@ -149,57 +149,85 @@ class TestPhoneFlashlight(unittest.TestCase):
         phoneAPI = phone.createPhone()
         
         # assert
-        self.assertFalse(hasattr(phoneAPI, "phone_flashlight"))
+        self.assertFalse(hasattr(phoneAPI, "phone_flashlights"))
 
+    @patch('rospy.get_param')
     @patch('rospy.has_param')
-    def test_initialize_with_single_item_config(self, hasParamMock):
+    def test_initialize_with_single_item_config(self, hasParamMock, getParamMock):
         # arange
         def has_param_side_effect(value):
             return value == "/mirte/phone_flashlight"
 
+        def get_param_side_effect(value):
+            return {
+                "flashlight": {
+                    "name": "flashlight",
+                }
+            }
+
         hasParamMock.side_effect = has_param_side_effect
+        getParamMock.side_effect = get_param_side_effect
         
         # act
         phoneAPI = phone.createPhone()
         
         # assert
-        self.assertTrue(hasattr(phoneAPI, "phone_flashlight"))
+        self.assertTrue(hasattr(phoneAPI, "phone_flashlights"))
+        self.assertNotEqual(phoneAPI.phone_flashlights["flashlight"], None)
     
     @patch('rospy.Publisher', MockPublisher)
+    @patch('rospy.get_param')
     @patch('rospy.has_param')
-    def test_turn_on_flashlight(self, hasParamMock):
+    def test_turn_on_flashlight(self, hasParamMock, getParamMock):
         # arange
         def has_param_side_effect(value):
             return value == "/mirte/phone_flashlight"
 
+        def get_param_side_effect(value):
+            return {
+                "flashlight": {
+                    "name": "flashlight",
+                }
+            }
+
         hasParamMock.side_effect = has_param_side_effect
+        getParamMock.side_effect = get_param_side_effect
+
         phoneAPI = phone.createPhone()
 
         # act
-        phoneAPI.setFlashlight(True)
+        phoneAPI.setFlashlight("flashlight", True)
 
         # assert
-        self.assertTrue(hasattr(phoneAPI, "phone_flashlight"))
-        self.assertTrue(hasattr(phoneAPI.phone_flashlight, "publish"))
-        phoneAPI.phone_flashlight.publish.assert_called_once_with(True)
+        mockPublish = phoneAPI.phone_flashlights["flashlight"].publish
+        mockPublish.assert_called_once_with(True)
 
     @patch('rospy.Publisher', MockPublisher)
+    @patch('rospy.get_param')
     @patch('rospy.has_param')
-    def test_turn_off_flashlight(self, hasParamMock):
+    def test_turn_off_flashlight(self, hasParamMock, getParamMock):
         # arange
         def has_param_side_effect(value):
             return value == "/mirte/phone_flashlight"
 
+        def get_param_side_effect(value):
+            return {
+                "flashlight": {
+                    "name": "flashlight",
+                }
+            }
+
         hasParamMock.side_effect = has_param_side_effect
+        getParamMock.side_effect = get_param_side_effect
+
         phoneAPI = phone.createPhone()
 
         # act
-        phoneAPI.setFlashlight(False)
+        phoneAPI.setFlashlight("flashlight", True)
 
         # assert
-        self.assertTrue(hasattr(phoneAPI, "phone_flashlight"))
-        self.assertTrue(hasattr(phoneAPI.phone_flashlight, "publish"))
-        phoneAPI.phone_flashlight.publish.assert_called_once_with(False)
+        mockPublish = phoneAPI.phone_flashlights["flashlight"].publish
+        mockPublish.assert_called_once_with(True)
 
 class TestPhoneTextOutput(unittest.TestCase): 
     @patch('rospy.has_param')

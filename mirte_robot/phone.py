@@ -40,14 +40,19 @@ class Phone():
         # Publishers for sensorlib FlashlightSubscriber
         # only one instance of flashlight is ever expected, with the name instance
         if rospy.has_param("/mirte/phone_flashlight"):
-            self.phone_flashlight = rospy.Publisher('/mirte/phone_flashlight/instance', Bool, queue_size=10)
+            phone_flashlights = rospy.get_param("/mirte/phone_flashlight")
+            self.phone_flashlights = {}
+            for flashlight in phone_flashlights:
+                topicName = '/mirte/phone_flashlight/' + phone_flashlights[flashlight]["name"]
+                self.phone_flashlights[flashlight] = rospy.Publisher(topicName, Bool, queue_size=10)
 
         # Publishers for sensorlib TextSubscribers
         if rospy.has_param("/mirte/phone_text_output"):
             phone_text_outputs = rospy.get_param("/mirte/phone_text_output")
             self.phone_text_outputs = {}
             for text in phone_text_outputs:
-                self.phone_text_outputs[text] = rospy.Publisher('/mirte/phone_text_output/' + phone_text_outputs[text]["name"], String, queue_size=10)
+                topicName = '/mirte/phone_text_output/' + phone_text_outputs[text]["name"]
+                self.phone_text_outputs[text] = rospy.Publisher(topicName, String, queue_size=10)
       
         
         signal.signal(signal.SIGINT, self._signal_handler)
@@ -64,8 +69,8 @@ class Phone():
         imageLocation = "/usr/local/src/mirte/mirte-oled-images/images/" + imageName + ".png"
         self.phone_image_outputs[imageSubscriber].setImage(imageLocation)
     
-    def setFlashlight(self, state):
-        """Turns the flashlight on or off
+    def setFlashlight(self, name, state):
+        """Turns the flashlight on (state=True) or off (state=False)
 
         Parameters:
             flashlight (str): The name of the sensor as defined in the configuration.
@@ -75,7 +80,8 @@ class Phone():
         Returns:
             bool: True if set successfully.
         """
-        return self.phone_flashlight.publish(state)
+        flash = self.phone_flashlights[name]
+        return flash.publish(state)
 
     def printText(self, publisher, text):
         """Prints the text received on a topic.
