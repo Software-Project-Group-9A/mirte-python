@@ -286,7 +286,7 @@ class Robot():
         flash = self.phone_flashlight
         return flash.publish(state)
 
-    def printText(self, text):
+    def printText(self, publisher, text):
         """Prints the text received on a topic
 
         Parameters:
@@ -299,8 +299,8 @@ class Robot():
         """
 
         
-        text_pub = self.phone_text_subscribers[text]
-        return text_pub.publish()
+        text_pub = self.phone_text_subscribers[publisher]
+        return text_pub.publish(text)
 
     def setAnalogPinValue(self, pin, value):
         """Sets the output value of an analog pin (PWM).
