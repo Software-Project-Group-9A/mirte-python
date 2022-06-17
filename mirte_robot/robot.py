@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import time
+from xml.etree.ElementTree import QName
 import rospy
 import rosservice
 import signal
@@ -132,7 +133,16 @@ class Robot():
             self.phone_button_subscribers = {}
             for sensor in phone_buttons:
                 self.phone_button_subscribers[sensor] = TopicSubscriber('/mirte/phone_button/' + phone_buttons[sensor]["name"], Bool)
+      
+        if rospy.has_param("/mirte/phone_flashlight"):
+            self.phone_flashlight = rospy.Publisher('/mirte/phone_flashlight/' + rospy.get_param("/mirte/phone_text_subscriber")["name"], Bool)
 
+        if rospy.has_param("/mirte/phone_text_subscriber"):
+            text_subscribers = rospy.get_param("/mirte/phone_text_subscriber")
+            self.phone_text_subscribers = {}
+            for text in text_subscribers:
+                self.phone_text_subscribers[text] = rospy.Publisher('/mirte/phone_text_subscriber/' + text_subscribers[text]["name"], String)
+      
         self.get_pin_value_service = rospy.ServiceProxy('/mirte/get_pin_value', GetPinValue, persistent=True)
         self.set_pin_value_service = rospy.ServiceProxy('/mirte/set_pin_value', SetPinValue, persistent=True)
 
@@ -262,6 +272,36 @@ class Robot():
         value = self.phone_button_subscribers[button].getValue()
         return value.data
 
+    def setFlashlight(self, flashlight, state):
+        """Turns the flashlight on or off
+
+        Parameters:
+            flashlight (str): The name of the sensor as defined in the configuration.
+            state (bool): The state in which the flashlight should change.
+                          true is on, false is off.
+
+        Returns:
+            bool: True if set successfully.
+        """
+        flash = self.phone_flashlight
+        return flash.publish(state)
+
+    def printText(self, text):
+        """Prints the text received on a topic
+
+        Parameters:
+            flashlight (str): The name of the sensor as defined in the configuration.
+            state (bool): The state in which the flashlight should change.
+                          true is on, false is off.
+
+        Returns:
+            bool: True if set successfully.
+        """
+
+        
+        text_pub = self.phone_text_subscribers[text]
+        return text_pub.publish()
+
     def setAnalogPinValue(self, pin, value):
         """Sets the output value of an analog pin (PWM).
 
@@ -367,7 +407,7 @@ class Robot():
         """
 
         motor = self.motor_services[motor](value)
-        return motor.status
+        return motor.status 
 
     def stop(self):
         """Stops all DC motors defined in the configuration
