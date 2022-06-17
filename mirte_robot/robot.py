@@ -8,8 +8,8 @@ import math
 import atexit
 
 # TODO: check if we need the telemetrix version of this?
-#sys.path.append('/usr/local/lib/python2.7/dist-packages/PyMata-2.20-py2.7.egg')  # Needed for jupyter notebooks
-#sys.path.append('/usr/local/lib/python2.7/dist-packages/pyserial-3.4-py2.7.egg')
+# sys.path.append('/usr/local/lib/python2.7/dist-packages/PyMata-2.20-py2.7.egg')  # Needed for jupyter notebooks
+# sys.path.append('/usr/local/lib/python2.7/dist-packages/pyserial-3.4-py2.7.egg')
 
 import message_filters
 from geometry_msgs.msg import Twist
@@ -17,12 +17,14 @@ from std_msgs.msg import Int32
 from std_msgs.msg import Bool
 from std_msgs.msg import String
 from std_msgs.msg import Empty
+from sensor_msgs.msg import Imu
 from mirte_msgs.msg import *
-
+from mirte_robot import imu_math
 from mirte_msgs.srv import *
 from std_srvs.srv import *
 
 mirte = {}
+
 
 class Robot():
     """ Robot API
@@ -31,12 +33,11 @@ class Robot():
         are just wrappers calling ROS topics or services.
     """
 
-
     def __init__(self):
         # Stop robot when exited
         atexit.register(self.stop)
 
-        self.PWM = 3 #PrivateConstants.PWM when moving to Python3
+        self.PWM = 3  # PrivateConstants.PWM when moving to Python3
         self.INPUT = 0
         self.OUTPUT = 1
         self.PULLUP = 11
@@ -49,9 +50,11 @@ class Robot():
         # Call /stop and /start service to disable/enable the ROS diff_drive_controller
         # By default this class will control the rbot though PWM (controller stopped). Only in case
         # the controller is needed, it will be enabled.
-        self.stop_controller_service = rospy.ServiceProxy('stop', Empty, persistent=True)
-        self.start_controller_service = rospy.ServiceProxy('start', Empty, persistent=True)
-        #self.stop_controller_service()
+        self.stop_controller_service = rospy.ServiceProxy(
+            'stop', Empty, persistent=True)
+        self.start_controller_service = rospy.ServiceProxy(
+            'start', Empty, persistent=True)
+        # self.stop_controller_service()
 
         # Service for motor speed
         self.motors = {}
@@ -59,36 +62,40 @@ class Robot():
             self.motors = rospy.get_param("/mirte/motor")
             self.motor_services = {}
             for motor in self.motors:
-                self.motor_services[motor] = rospy.ServiceProxy('/mirte/set_' + self.motors[motor]["name"] + '_speed', SetMotorSpeed, persistent=True)
+                self.motor_services[motor] = rospy.ServiceProxy(
+                    '/mirte/set_' + self.motors[motor]["name"] + '_speed', SetMotorSpeed, persistent=True)
 
         # Service for motor speed
         if rospy.has_param("/mirte/servo"):
             servos = rospy.get_param("/mirte/servo")
             self.servo_services = {}
             for servo in servos:
-                self.servo_services[servo] = rospy.ServiceProxy('/mirte/set_' + servos[servo]["name"] + '_servo_angle', SetServoAngle, persistent=True)
+                self.servo_services[servo] = rospy.ServiceProxy(
+                    '/mirte/set_' + servos[servo]["name"] + '_servo_angle', SetServoAngle, persistent=True)
 
         rospy.init_node('mirte_python_api', anonymous=False)
 
-        ## Sensors
-        ## The sensors are now just using a blocking service call. This is intentionally
-        ## since one first needs to learn to program in a synchronous way without events.
-        ## Event based programming is already possible using the ROS topics for the
-        ## same sensors. At a later stage we will expose this as well to this API and
-        ## maybe even to blockly.
+        # Sensors
+        # The sensors are now just using a blocking service call. This is intentionally
+        # since one first needs to learn to program in a synchronous way without events.
+        # Event based programming is already possible using the ROS topics for the
+        # same sensors. At a later stage we will expose this as well to this API and
+        # maybe even to blockly.
 
         # Services for distance sensors
         if rospy.has_param("/mirte/distance"):
             distance_sensors = rospy.get_param("/mirte/distance")
             self.distance_services = {}
             for sensor in distance_sensors:
-               self.distance_services[sensor] = rospy.ServiceProxy('/mirte/get_distance_' + distance_sensors[sensor]["name"], GetDistance, persistent=True)
+                self.distance_services[sensor] = rospy.ServiceProxy(
+                    '/mirte/get_distance_' + distance_sensors[sensor]["name"], GetDistance, persistent=True)
 
         if rospy.has_param("/mirte/oled"):
             oleds = rospy.get_param("/mirte/oled")
             self.oled_services = {}
             for oled in oleds:
-               self.oled_services[oled] = rospy.ServiceProxy('/mirte/set_' + oleds[oled]["name"] + '_image', SetOLEDImage, persistent=True)
+                self.oled_services[oled] = rospy.ServiceProxy(
+                    '/mirte/set_' + oleds[oled]["name"] + '_image', SetOLEDImage, persistent=True)
 
         # Services for intensity sensors (TODO: how to expose the digital version?)
         if rospy.has_param("/mirte/intensity"):
@@ -102,46 +109,56 @@ class Robot():
             service_list = rosservice.get_service_list()
             for sensor in intensity_sensors:
                 if "/mirte/get_intensity_" + intensity_sensors[sensor]["name"] in service_list:
-                    self.intensity_services[sensor] = rospy.ServiceProxy('/mirte/get_intensity_' + intensity_sensors[sensor]["name"], GetIntensity, persistent=True)
+                    self.intensity_services[sensor] = rospy.ServiceProxy(
+                        '/mirte/get_intensity_' + intensity_sensors[sensor]["name"], GetIntensity, persistent=True)
                 if "/mirte/get_intensity_" + intensity_sensors[sensor]["name"] + "_digital" in service_list:
-                    self.intensity_services[sensor + "_digital"] = rospy.ServiceProxy('/mirte/get_intensity_' + intensity_sensors[sensor]["name"] + "_digital", GetIntensityDigital, persistent=True)
-
+                    self.intensity_services[sensor + "_digital"] = rospy.ServiceProxy(
+                        '/mirte/get_intensity_' + intensity_sensors[sensor]["name"] + "_digital", GetIntensityDigital, persistent=True)
 
         # Services for encoder sensors
         if rospy.has_param("/mirte/encoder"):
             encoder_sensors = rospy.get_param("/mirte/encoder")
             self.encoder_services = {}
             for sensor in encoder_sensors:
-                self.encoder_services[sensor] = rospy.ServiceProxy('/mirte/get_encoder_' + encoder_sensors[sensor]["name"], GetEncoder, persistent=True)
+                self.encoder_services[sensor] = rospy.ServiceProxy(
+                    '/mirte/get_encoder_' + encoder_sensors[sensor]["name"], GetEncoder, persistent=True)
 
         # Services for keypad sensores
         if rospy.has_param("/mirte/keypad"):
             keypad_sensors = rospy.get_param("/mirte/keypad")
             self.keypad_services = {}
             for sensor in keypad_sensors:
-                self.keypad_services[sensor] = rospy.ServiceProxy('/mirte/get_keypad_' + keypad_sensors[sensor]["name"], GetKeypad, persistent=True)
+                self.keypad_services[sensor] = rospy.ServiceProxy(
+                    '/mirte/get_keypad_' + keypad_sensors[sensor]["name"], GetKeypad, persistent=True)
 
         if rospy.has_param("/mirte/phone_slider"):
             phone_sliders = rospy.get_param("/mirte/phone_slider")
             self.phone_slider_subscribers = {}
             for sensor in phone_sliders:
-                self.phone_slider_subscribers[sensor] = TopicSubscriber('/mirte/phone_slider/' + phone_sliders[sensor]["name"], Int32)
+                self.phone_slider_subscribers[sensor] = TopicSubscriber(
+                    '/mirte/phone_slider/' + phone_sliders[sensor]["name"], Int32)
 
         if rospy.has_param("/mirte/phone_button"):
             phone_buttons = rospy.get_param("/mirte/phone_button")
             self.phone_button_subscribers = {}
             for sensor in phone_buttons:
-                self.phone_button_subscribers[sensor] = TopicSubscriber('/mirte/phone_button/' + phone_buttons[sensor]["name"], Bool)
+                self.phone_button_subscribers[sensor] = TopicSubscriber(
+                    '/mirte/phone_button/' + phone_buttons[sensor]["name"], Bool)
 
         if rospy.has_param("/mirte/phone_compass"):
             phone_compasses = rospy.get_param("/mirte/phone_compass")
             self.phone_compass_subscribers = {}
             for sensor in phone_compasses:
-                self.phone_compass_subscribers[sensor] = TopicSubscriber('/mirte/phone_compass/' + phone_compasses[sensor]["name"], Int32)
+                self.phone_compass_subscribers[sensor] = TopicSubscriber(
+                    '/mirte/phone_compass/' + phone_compasses[sensor]["name"], Int32)
+        
+        if rospy.has_param("/mirte/imu"):
+            self.imu_sensor = TopicSubscriber('mirte/gyro', Imu)
 
-        self.get_pin_value_service = rospy.ServiceProxy('/mirte/get_pin_value', GetPinValue, persistent=True)
-        self.set_pin_value_service = rospy.ServiceProxy('/mirte/set_pin_value', SetPinValue, persistent=True)
-
+        self.get_pin_value_service = rospy.ServiceProxy(
+            '/mirte/get_pin_value', GetPinValue, persistent=True)
+        self.set_pin_value_service = rospy.ServiceProxy(
+            '/mirte/set_pin_value', SetPinValue, persistent=True)
 
         signal.signal(signal.SIGINT, self._signal_handler)
         signal.signal(signal.SIGTERM, self._signal_handler)
@@ -165,9 +182,9 @@ class Robot():
         last_call = self.last_call
         self.last_call = time.time()
         if last_call == 0:
-           return 0
+            return 0
         else:
-           return time.time() - last_call
+            return time.time() - last_call
 
     def getDistance(self, sensor):
         """Gets data from a HC-SR04 distance sensor: calculated distance in meters.
@@ -181,7 +198,6 @@ class Robot():
         Warning:
             A maximum of 6 distance sensors is supported.
         """
-
 
         dist = self.distance_services[sensor]()
         return dist.data
@@ -197,9 +213,9 @@ class Robot():
             int: Value of the sensor (0-255 when analog, 0-1 when digital).
         """
         if type == "analog":
-           value = self.intensity_services[sensor]()
+            value = self.intensity_services[sensor]()
         if type == "digital":
-           value = self.intensity_services[sensor + "_digital"]()
+            value = self.intensity_services[sensor + "_digital"]()
         return value.data
 
     def getEncoder(self, sensor):
@@ -224,7 +240,6 @@ class Robot():
         Returns:
             str: The name of the button ('up', 'down', 'left', 'right', 'enter').
         """
-
 
         value = self.keypad_services[keypad]()
         return value.data
@@ -280,6 +295,45 @@ class Robot():
 
         value = self.phone_compass_subscribers[compass].getValue()
         return value.data
+
+    def getImuLinearAcceleration(self, axis):
+        imu = self.imu_sensor
+        data = imu.getValue().linear_acceleration
+        x, y, z = data.x, data.y, data.z
+        if axis == 'X':
+            return x
+        elif axis == 'Y':
+            return y
+        elif axis == 'Z':
+            return z
+        else:
+            raise Exception("invalid axis!")
+
+    def getImuAngularVelocity(self, angle):
+        imu = self.imu_sensor
+        data = imu.getValue().angular_velocity
+        x, y, z = data.x, data.y, data.z
+        if angle == 'X':
+            return x
+        elif angle == 'Y':
+            return y
+        elif angle == 'Z':
+            return z
+        else:
+            raise Exception("wrong input!")
+
+    def getImuRotation(self, angle):
+        imu = self.imu_sensor
+        q = imu.getValue().orientation
+        x, y, z = imu_math.euler_from_quaternion(q.x, q.y, q.z, q.w)
+        if angle == 'X':
+            return x
+        elif angle == 'Y':
+            return y
+        elif angle == 'Z':
+            return z
+        else:
+            raise Exception("wrong input!")
 
     def setAnalogPinValue(self, pin, value):
         """Sets the output value of an analog pin (PWM).
@@ -398,16 +452,18 @@ class Robot():
         """
 
         for motor in self.motors:
-           self.setMotorSpeed(self.motors[motor]["name"], 0)
+            self.setMotorSpeed(self.motors[motor]["name"], 0)
 
     def _signal_handler(self, sig, frame):
         self.stop()
         sys.exit()
 
-## TopicSubscriber subscribes to a topic and can be used to
-## save the last received value.
+# TopicSubscriber subscribes to a topic and can be used to
+# save the last received value.
+
+
 class TopicSubscriber:
-    
+
     def __init__(self, topic_name, messageType):
         self.value = messageType()
         rospy.Subscriber(topic_name, messageType, self.callback)
