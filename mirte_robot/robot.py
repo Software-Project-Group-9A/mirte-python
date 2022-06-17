@@ -135,13 +135,7 @@ class Robot():
             self.phone_button_subscribers = {}
             for sensor in phone_buttons:
                 self.phone_button_subscribers[sensor] = TopicSubscriber('/mirte/phone_button/' + phone_buttons[sensor]["name"], Bool)
-
-        if rospy.has_param("/mirte/phone_text_subscriber"):
-            text_subscribers = rospy.get_param("/mirte/phone_text_subscriber")
-            self.phone_text_subscribers = {}
-            for text in text_subscribers:
-                self.phone_text_subscribers[text] = rospy.Publisher('/mirte/phone_text_subscriber/' + text_subscribers[text]["name"], String)
-      
+        
         self.get_pin_value_service = rospy.ServiceProxy('/mirte/get_pin_value', GetPinValue, persistent=True)
         self.set_pin_value_service = rospy.ServiceProxy('/mirte/set_pin_value', SetPinValue, persistent=True)
 
@@ -296,22 +290,6 @@ class Robot():
         """
         flash = self.phone_flashlight
         return flash.publish(state)
-
-    def printText(self, publisher, text):
-        """Prints the text received on a topic
-
-        Parameters:
-            flashlight (str): The name of the sensor as defined in the configuration.
-            state (bool): The state in which the flashlight should change.
-                          true is on, false is off.
-
-        Returns:
-            bool: True if set successfully.
-        """
-
-        
-        text_pub = self.phone_text_subscribers[publisher]
-        return text_pub.publish(text)
 
     def setAnalogPinValue(self, pin, value):
         """Sets the output value of an analog pin (PWM).

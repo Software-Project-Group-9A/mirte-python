@@ -9,6 +9,7 @@ import atexit
 
 from sensor_msgs.msg import CompressedImage
 from std_msgs.msg import Bool
+from std_msgs.msg import String
 
 phone = {}
 
@@ -40,6 +41,14 @@ class Phone():
         # only one instance of flashlight is ever expected, with the name instance
         if rospy.has_param("/mirte/phone_flashlight"):
             self.phone_flashlight = rospy.Publisher('/mirte/phone_flashlight/instance', Bool, queue_size=10)
+
+        # Publishers for sensorlib TextSubscribers
+        if rospy.has_param("/mirte/phone_text_output"):
+            phone_text_outputs = rospy.get_param("/mirte/phone_text_output")
+            self.phone_text_outputs = {}
+            for text in phone_text_outputs:
+                self.phone_text_outputs[text] = rospy.Publisher('/mirte/phone_text_output/' + text_subscribers[text]["name"], String)
+      
         
         signal.signal(signal.SIGINT, self._signal_handler)
         signal.signal(signal.SIGTERM, self._signal_handler)
@@ -67,6 +76,22 @@ class Phone():
             bool: True if set successfully.
         """
         return self.phone_flashlight.publish(state)
+
+    def printText(self, publisher, text):
+        """Prints the text received on a topic.
+
+        Parameters:
+            flashlight (str): The name of the sensor as defined in the configuration.
+            state (bool): The state in which the flashlight should change.
+                          true is on, false is off.
+
+        Returns:
+            bool: True if set successfully.
+        """
+
+        
+        text_pub = self.phone_text_subscribers[publisher]
+        return text_pub.publish(text)
 
     def _signal_handler(self, sig, frame):
         sys.exit()

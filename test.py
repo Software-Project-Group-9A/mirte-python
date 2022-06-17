@@ -183,19 +183,90 @@ class TestPhoneFlashlight(unittest.TestCase):
         self.assertTrue(hasattr(phoneAPI.phone_flashlight, "publish"))
         phoneAPI.phone_flashlight.publish.assert_called_once_with(True)
 
+    @patch('rospy.Publisher', MockPublisher)
+    @patch('rospy.has_param')
+    def test_turn_off_flashlight(self, hasParamMock):
+        # arange
+        def has_param_side_effect(value):
+            return value == "/mirte/phone_flashlight"
+
+        hasParamMock.side_effect = has_param_side_effect
+        phoneAPI = phone.createPhone()
+
+        # act
+        phoneAPI.setFlashlight(False)
+
+        # assert
+        self.assertTrue(hasattr(phoneAPI, "phone_flashlight"))
+        self.assertTrue(hasattr(phoneAPI.phone_flashlight, "publish"))
+        phoneAPI.phone_flashlight.publish.assert_called_once_with(False)
+
+class TestPhoneTextOutput(unittest.TestCase): 
+    @patch('rospy.has_param')
+    def test_initialize_with_empty_config(self, hasParamMock):
+        # arange
+        def has_param_side_effect(value):
+            return False
+
+        hasParamMock.side_effect = has_param_side_effect
+        
+        # act
+        phoneAPI = phone.createPhone()
+        
+        # assert
+        self.assertFalse(hasattr(phoneAPI, "phone_text_output"))
+
+    @patch('rospy.get_param')
+    @patch('rospy.has_param')
+    def test_initialize_with_single_item_config(self, hasParamMock, getParamMock):
+        # arange
+        def has_param_side_effect(value):
+            return value == "/mirte/phone_text_output"
+        
+        def get_param_side_effect(value):
+            return {
+                "outputA": {
+                    "name": "outputA"
+                }
+            }
+
+        hasParamMock.side_effect = has_param_side_effect
+        getParamMock.side_effect = get_param_side_effect
+        
+        # act
+        phoneAPI = phone.createPhone()
+        
+        # assert
+        self.assertTrue(hasattr(phoneAPI, "phone_text_outputs"))
+        self.assertNotEqual(phoneAPI.phone_text_outputs.get("output_a"), None)
+    
+    @patch('rospy.Publisher', MockPublisher)
+    @patch('rospy.get_param')
+    @patch('rospy.has_param')
+    def test_print_text(self, hasParamMock, getParamMock):
+        # arange
+        def has_param_side_effect(value):
+            return value == "/mirte/phone_text_output"
+        
+        def get_param_side_effect(value):
+            return {
+                "outputA": {
+                    "name": "outputA"
+                }
+            }
+
+        hasParamMock.side_effect = has_param_side_effect
+        getParamMock.side_effect = get_param_side_effect
+
+        phoneAPI = phone.createPhone()
+        publishText = "Hi mom!"
+
+        # act
+        phoneAPI.printText("outputA", publishText)
+
+        # assert
+        mockPublish = phoneAPI.phone_text_output["outputA"].publish
+        publish.assert_called_once_with(publishText)
+
 if __name__ == '__main__':
     unittest.main()
-
-# phone = phone.createPhone()
-
-# print('starting tests')
-
-# # test 1
-# phone.phone_image_outputs = {}
-# phone.phone_image_outputs['image_out'] = MockPhoneImageOutput()
-
-# phone.setPhoneImage('image_out', 'zoef_logo')
-
-# assert phone.phone_image_outputs['image_out'].imageLocation == "/usr/local/src/mirte/mirte-oled-images/images/zoef_logo.png" 
-
-# # test 
