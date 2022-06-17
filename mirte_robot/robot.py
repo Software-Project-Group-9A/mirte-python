@@ -145,6 +145,13 @@ class Robot():
                 self.phone_button_subscribers[sensor] = TopicSubscriber(
                     '/mirte/phone_button/' + phone_buttons[sensor]["name"], Bool)
 
+        if rospy.has_param("/mirte/phone_compass"):
+            phone_compasses = rospy.get_param("/mirte/phone_compass")
+            self.phone_compass_subscribers = {}
+            for sensor in phone_compasses:
+                self.phone_compass_subscribers[sensor] = TopicSubscriber(
+                    '/mirte/phone_compass/' + phone_compasses[sensor]["name"], Int32)
+        
         if rospy.has_param("/mirte/imu"):
             self.imu_sensor = TopicSubscriber('mirte/gyro', Imu)
 
@@ -276,18 +283,31 @@ class Robot():
         value = self.phone_button_subscribers[button].getValue()
         return value.data
 
-    def getImuLinearAcceleration(self, angle):
+    def getCompassValue(self, compass):
+        """Gets the direction of compass in degrees. 0 degrees is north, 90 degrees is east, etc.
+
+        Parameters:
+            compass (str): The name of the compass as specified in the settings.
+
+        Returns:
+            int: Value of compass.
+        """
+
+        value = self.phone_compass_subscribers[compass].getValue()
+        return value.data
+
+    def getImuLinearAcceleration(self, axis):
         imu = self.imu_sensor
         data = imu.getValue().linear_acceleration
         x, y, z = data.x, data.y, data.z
-        if angle == 'X':
+        if axis == 'X':
             return x
-        elif angle == 'Y':
+        elif axis == 'Y':
             return y
-        elif angle == 'Z':
+        elif axis == 'Z':
             return z
         else:
-            raise Exception("wrong input!")
+            raise Exception("invalid axis!")
 
     def getImuAngularVelocity(self, angle):
         imu = self.imu_sensor
