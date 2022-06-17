@@ -55,7 +55,7 @@ class TestPhoneImageOutput(unittest.TestCase):
         
         # assert
         self.assertTrue(hasattr(phoneAPI, "phone_image_outputs"))
-        self.assertNotEquals(phoneAPI.phone_image_outputs.get("output_a"), None)
+        self.assertNotEqual(phoneAPI.phone_image_outputs.get("output_a"), None)
 
     @patch('rospy.get_param')
     @patch('rospy.has_param')
@@ -83,8 +83,8 @@ class TestPhoneImageOutput(unittest.TestCase):
         
         # assert
         self.assertTrue(hasattr(phoneAPI, "phone_image_outputs"))
-        self.assertNotEquals(phoneAPI.phone_image_outputs.get("output_a"), None)
-        self.assertNotEquals(phoneAPI.phone_image_outputs.get("output_b"), None)
+        self.assertNotEqual(phoneAPI.phone_image_outputs.get("output_a"), None)
+        self.assertNotEqual(phoneAPI.phone_image_outputs.get("output_b"), None)
 
 
     def test_correct_image_output_call(self):
@@ -135,7 +135,53 @@ class TestPhoneImageOutput(unittest.TestCase):
         expectedMessage.data = 'test_content'
 
         mockPublish.assert_called_once_with(expectedMessage)
+
+class TestPhoneFlashlight(unittest.TestCase): 
+    @patch('rospy.has_param')
+    def test_initialize_with_empty_config(self, hasParamMock):
+        # arange
+        def has_param_side_effect(value):
+            return False
+
+        hasParamMock.side_effect = has_param_side_effect
         
+        # act
+        phoneAPI = phone.createPhone()
+        
+        # assert
+        self.assertFalse(hasattr(phoneAPI, "phone_flashlight"))
+
+    @patch('rospy.has_param')
+    def test_initialize_with_single_item_config(self, hasParamMock):
+        # arange
+        def has_param_side_effect(value):
+            return value == "/mirte/phone_flashlight"
+
+        hasParamMock.side_effect = has_param_side_effect
+        
+        # act
+        phoneAPI = phone.createPhone()
+        
+        # assert
+        self.assertTrue(hasattr(phoneAPI, "phone_flashlight"))
+    
+    @patch('rospy.Publisher', MockPublisher)
+    @patch('rospy.has_param')
+    def test_turn_on_flashlight(self, hasParamMock):
+        # arange
+        def has_param_side_effect(value):
+            return value == "/mirte/phone_flashlight"
+
+        hasParamMock.side_effect = has_param_side_effect
+        phoneAPI = phone.createPhone()
+
+        # act
+        phoneAPI.setFlashlight(True)
+
+        # assert
+        self.assertTrue(hasattr(phoneAPI, "phone_flashlight"))
+        self.assertTrue(hasattr(phoneAPI.phone_flashlight, "publish"))
+        phoneAPI.phone_flashlight.publish.assert_called_once_with(True)
 
 if __name__ == '__main__':
     unittest.main()

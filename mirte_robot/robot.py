@@ -135,9 +135,6 @@ class Robot():
             self.phone_button_subscribers = {}
             for sensor in phone_buttons:
                 self.phone_button_subscribers[sensor] = TopicSubscriber('/mirte/phone_button/' + phone_buttons[sensor]["name"], Bool)
-      
-        if rospy.has_param("/mirte/phone_flashlight"):
-            self.phone_flashlight = rospy.Publisher('/mirte/phone_flashlight/' + rospy.get_param("/mirte/phone_text_subscriber")["name"], Bool)
 
         if rospy.has_param("/mirte/phone_text_subscriber"):
             text_subscribers = rospy.get_param("/mirte/phone_text_subscriber")

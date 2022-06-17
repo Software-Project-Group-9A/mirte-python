@@ -8,6 +8,7 @@ import math
 import atexit
 
 from sensor_msgs.msg import CompressedImage
+from std_msgs.msg import Bool
 
 phone = {}
 
@@ -34,6 +35,11 @@ class Phone():
             # for each ImageSubscriber, create a publisher
             for actuator in phone_image_outputs:
                 self.phone_image_outputs[actuator] = PhoneImageOutput(phone_image_outputs[actuator]["name"])
+
+        # Publishers for sensorlib FlashlightSubscriber
+        # only one instance of flashlight is ever expected, with the name instance
+        if rospy.has_param("/mirte/phone_flashlight"):
+            self.phone_flashlight = rospy.Publisher('/mirte/phone_flashlight/instance', Bool, queue_size=10)
         
         signal.signal(signal.SIGINT, self._signal_handler)
         signal.signal(signal.SIGTERM, self._signal_handler)
@@ -48,6 +54,19 @@ class Phone():
         """
         imageLocation = "/usr/local/src/mirte/mirte-oled-images/images/" + imageName + ".png"
         self.phone_image_outputs[imageSubscriber].setImage(imageLocation)
+    
+    def setFlashlight(self, state):
+        """Turns the flashlight on or off
+
+        Parameters:
+            flashlight (str): The name of the sensor as defined in the configuration.
+            state (bool): The state in which the flashlight should change.
+                          true is on, false is off.
+
+        Returns:
+            bool: True if set successfully.
+        """
+        return self.phone_flashlight.publish(state)
 
     def _signal_handler(self, sig, frame):
         sys.exit()
