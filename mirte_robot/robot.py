@@ -133,6 +133,12 @@ class Robot():
             for sensor in phone_buttons:
                 self.phone_button_subscribers[sensor] = TopicSubscriber('/mirte/phone_button/' + phone_buttons[sensor]["name"], Bool)
 
+        if rospy.has_param("/mirte/phone_compass"):
+            phone_compasses = rospy.get_param("/mirte/phone_compass")
+            self.phone_compass_subscribers = {}
+            for sensor in phone_compasses:
+                self.phone_compass_subscribers[sensor] = TopicSubscriber('/mirte/phone_compass/' + phone_buttons[sensor]["name"], Int32)
+
         self.get_pin_value_service = rospy.ServiceProxy('/mirte/get_pin_value', GetPinValue, persistent=True)
         self.set_pin_value_service = rospy.ServiceProxy('/mirte/set_pin_value', SetPinValue, persistent=True)
 
@@ -260,6 +266,19 @@ class Robot():
         """
 
         value = self.phone_button_subscribers[button].getValue()
+        return value.data
+
+    def getCompassValue(self, compass):
+        """Gets the button value of compass.
+
+        Parameters:
+            compass (str): The name of the compass as specified in the settings.
+
+        Returns:
+            int: Value of compass.
+        """
+
+        value = self.phone_compass_subscribers[compass].getValue()
         return value.data
 
     def setAnalogPinValue(self, pin, value):
