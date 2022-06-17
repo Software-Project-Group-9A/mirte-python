@@ -137,7 +137,7 @@ class Robot():
             phone_compasses = rospy.get_param("/mirte/phone_compass")
             self.phone_compass_subscribers = {}
             for sensor in phone_compasses:
-                self.phone_compass_subscribers[sensor] = TopicSubscriber('/mirte/phone_compass/' + phone_buttons[sensor]["name"], Int32)
+                self.phone_compass_subscribers[sensor] = TopicSubscriber('/mirte/phone_compass/' + phone_compasses[sensor]["name"], Int32)
 
         self.get_pin_value_service = rospy.ServiceProxy('/mirte/get_pin_value', GetPinValue, persistent=True)
         self.set_pin_value_service = rospy.ServiceProxy('/mirte/set_pin_value', SetPinValue, persistent=True)
@@ -269,7 +269,7 @@ class Robot():
         return value.data
 
     def getCompassValue(self, compass):
-        """Gets the button value of compass.
+        """Gets the direction of compass in degrees. 0 degrees is north, 90 degrees is east, etc.
 
         Parameters:
             compass (str): The name of the compass as specified in the settings.
