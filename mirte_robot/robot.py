@@ -18,10 +18,12 @@ from std_msgs.msg import Int32
 from std_msgs.msg import Bool
 from std_msgs.msg import String
 from std_msgs.msg import Empty
+from sensor_msgs.msg import CompressedImage
 from mirte_msgs.msg import *
 
 from mirte_msgs.srv import *
 from std_srvs.srv import *
+import phone
 
 mirte = {}
 
@@ -150,6 +152,8 @@ class Robot():
         signal.signal(signal.SIGINT, self._signal_handler)
         signal.signal(signal.SIGTERM, self._signal_handler)
 
+        self.phone = createPhone()
+
     def getTimestamp(self):
         """Gets the elapsed time in seconds since the initialization fo the Robot.
 
@@ -245,6 +249,16 @@ class Robot():
 
         value = self.get_pin_value_service(str(pin), "analog")
         return value.data
+
+    def setPhoneImage(self, imageSubscriber, imageName):
+        """Shows an image on an ImageSubscriber located on a phone. 
+
+        Parameters:
+            imageSubscriber (str): The name of the ImageSubscriber as specified in the settings.
+            image (str): Image name as defined in the images folder of the mirte-oled-images repository (excl file extension). 
+            Image must be a png file.
+        """
+        self.phone.setPhoneImage(imageSubscriber, imageName)
 
     def getSliderValue(self, slider):
         """Gets the slider value of slider.
