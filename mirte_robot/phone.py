@@ -47,7 +47,7 @@ class Phone():
             phone_text_outputs = rospy.get_param("/mirte/phone_text_output")
             self.phone_text_outputs = {}
             for text in phone_text_outputs:
-                self.phone_text_outputs[text] = rospy.Publisher('/mirte/phone_text_output/' + text_subscribers[text]["name"], String)
+                self.phone_text_outputs[text] = rospy.Publisher('/mirte/phone_text_output/' + phone_text_outputs[text]["name"], String, queue_size=10)
       
         
         signal.signal(signal.SIGINT, self._signal_handler)
@@ -90,7 +90,7 @@ class Phone():
         """
 
         
-        text_pub = self.phone_text_subscribers[publisher]
+        text_pub = self.phone_text_outputs[publisher]
         return text_pub.publish(text)
 
     def _signal_handler(self, sig, frame):

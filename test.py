@@ -238,7 +238,7 @@ class TestPhoneTextOutput(unittest.TestCase):
         
         # assert
         self.assertTrue(hasattr(phoneAPI, "phone_text_outputs"))
-        self.assertNotEqual(phoneAPI.phone_text_outputs.get("output_a"), None)
+        self.assertNotEqual(phoneAPI.phone_text_outputs["outputA"], None)
     
     @patch('rospy.Publisher', MockPublisher)
     @patch('rospy.get_param')
@@ -265,8 +265,8 @@ class TestPhoneTextOutput(unittest.TestCase):
         phoneAPI.printText("outputA", publishText)
 
         # assert
-        mockPublish = phoneAPI.phone_text_output["outputA"].publish
-        publish.assert_called_once_with(publishText)
+        mockPublish = phoneAPI.phone_text_outputs["outputA"].publish
+        mockPublish.assert_called_once_with(publishText)
 
 if __name__ == '__main__':
     unittest.main()
