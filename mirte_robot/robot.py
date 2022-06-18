@@ -134,13 +134,6 @@ class Robot():
                 self.keypad_services[sensor] = rospy.ServiceProxy(
                     '/mirte/get_keypad_' + keypad_sensors[sensor]["name"], GetKeypad, persistent=True)
 
-        if rospy.has_param("/mirte/phone_slider"):
-            phone_sliders = rospy.get_param("/mirte/phone_slider")
-            self.phone_slider_subscribers = {}
-            for sensor in phone_sliders:
-                self.phone_slider_subscribers[sensor] = TopicSubscriber(
-                    '/mirte/phone_slider/' + phone_sliders[sensor]["name"], Int32)
-
         if rospy.has_param("/mirte/phone_button"):
             phone_buttons = rospy.get_param("/mirte/phone_button")
             self.phone_button_subscribers = {}
@@ -267,19 +260,6 @@ class Robot():
             Image must be a png file.
         """
         self.phone.setPhoneImage(imageSubscriber, imageName)
-
-    def getSliderValue(self, slider):
-        """Gets the slider value of slider.
-
-        Parameters:
-            slider (str): The name of the slider as specified in the settings.
-
-        Returns:
-            int: Value of slider.
-        """
-
-        value = self.phone_slider_subscribers[slider].getValue()
-        return value.data
 
     def getButtonValue(self, button):
         """Gets the button value of button.

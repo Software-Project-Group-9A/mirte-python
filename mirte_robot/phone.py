@@ -9,6 +9,7 @@ import atexit
 
 from sensor_msgs.msg import CompressedImage
 from std_msgs.msg import Bool
+from std_msgs.msg import Int32
 from std_msgs.msg import String
 
 phone = {}
@@ -28,6 +29,14 @@ class Phone():
         self.last_call = 0
 
         rospy.init_node('mirte_python_api', anonymous=True)
+
+        # Subscribers for phone sliders 
+        if rospy.has_param("/mirte/phone_slider"):
+            phone_sliders = rospy.get_param("/mirte/phone_slider")
+            self.phone_slider_subscribers = {}
+            for sensor in phone_sliders:
+                self.phone_slider_subscribers[sensor] = TopicSubscriber(
+                    '/mirte/phone_slider/' + phone_sliders[sensor]["name"], Int32)
 
         # Publishers for sensorlib ImageSubscriber instances
         if rospy.has_param("/mirte/phone_image_output"):
@@ -58,6 +67,19 @@ class Phone():
         signal.signal(signal.SIGINT, self._signal_handler)
         signal.signal(signal.SIGTERM, self._signal_handler)
 
+    def getSliderValue(self, slider):
+        """Gets the slider value of slider.
+
+        Parameters:
+            slider (str): The name of the slider as specified in the settings.
+
+        Returns:
+            int: Value of slider.
+        """
+
+        value = self.phone_slider_subscribers[slider].getValue()
+        return value.data
+    
     def setPhoneImage(self, imageSubscriber, imageName):
         """Shows an image on an ImageSubscriber located on a phone. 
 
@@ -127,6 +149,21 @@ class PhoneImageOutput:
         self.publisher.publish(msg)
         # close image file
         imageFile.close()
+
+# TopicSubscriber subscribes to a topic and can be used to
+# save the last received value.
+
+class TopicSubscriber:
+
+    def __init__(self, topic_name, messageType):
+        self.value = messageType()
+        rospy.Subscriber(topic_name, messageType, self.callback)
+
+    def callback(self, data):
+        self.value = data
+
+    def getValue(self):
+        return self.value
 
 
 # We need a special function to initiate the Robot() because the main.py need to call the
