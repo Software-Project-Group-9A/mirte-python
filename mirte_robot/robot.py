@@ -133,13 +133,6 @@ class Robot():
             for sensor in keypad_sensors:
                 self.keypad_services[sensor] = rospy.ServiceProxy(
                     '/mirte/get_keypad_' + keypad_sensors[sensor]["name"], GetKeypad, persistent=True)
-
-        if rospy.has_param("/mirte/phone_button"):
-            phone_buttons = rospy.get_param("/mirte/phone_button")
-            self.phone_button_subscribers = {}
-            for sensor in phone_buttons:
-                topicName = '/mirte/phone_button/' + phone_buttons[sensor]["name"]
-                self.phone_button_subscribers[sensor] = TopicSubscriber(topicName, Bool)
         
         self.get_pin_value_service = rospy.ServiceProxy('/mirte/get_pin_value', GetPinValue, persistent=True)
         self.set_pin_value_service = rospy.ServiceProxy('/mirte/set_pin_value', SetPinValue, persistent=True)
@@ -249,29 +242,6 @@ class Robot():
         """
 
         value = self.get_pin_value_service(str(pin), "analog")
-        return value.data
-
-    def setPhoneImage(self, imageSubscriber, imageName):
-        """Shows an image on an ImageSubscriber located on a phone. 
-
-        Parameters:
-            imageSubscriber (str): The name of the ImageSubscriber as specified in the settings.
-            image (str): Image name as defined in the images folder of the mirte-oled-images repository (excl file extension). 
-            Image must be a png file.
-        """
-        self.phone.setPhoneImage(imageSubscriber, imageName)
-
-    def getButtonValue(self, button):
-        """Gets the button value of button.
-
-        Parameters:
-            button (str): The name of the button as specified in the settings.
-
-        Returns:
-            int: Value of button.
-        """
-
-        value = self.phone_button_subscribers[button].getValue()
         return value.data
 
     def getImuLinearAcceleration(self, angle):

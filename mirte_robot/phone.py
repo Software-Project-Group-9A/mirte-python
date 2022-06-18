@@ -37,6 +37,14 @@ class Phone():
             for sensor in phone_sliders:
                 self.phone_slider_subscribers[sensor] = TopicSubscriber(
                     '/mirte/phone_slider/' + phone_sliders[sensor]["name"], Int32)
+        
+        # Subscribers for phone button
+        if rospy.has_param("/mirte/phone_button"):
+            phone_buttons = rospy.get_param("/mirte/phone_button")
+            self.phone_button_subscribers = {}
+            for sensor in phone_buttons:
+                topicName = '/mirte/phone_button/' + phone_buttons[sensor]["name"]
+                self.phone_button_subscribers[sensor] = TopicSubscriber(topicName, Bool)
 
         # Publishers for sensorlib ImageSubscriber instances
         if rospy.has_param("/mirte/phone_image_output"):
@@ -78,6 +86,19 @@ class Phone():
         """
 
         value = self.phone_slider_subscribers[slider].getValue()
+        return value.data
+
+    def getButtonValue(self, button):
+        """Gets the button value of button.
+
+        Parameters:
+            button (str): The name of the button as specified in the settings.
+
+        Returns:
+            int: Value of button.
+        """
+
+        value = self.phone_button_subscribers[button].getValue()
         return value.data
     
     def setPhoneImage(self, imageSubscriber, imageName):
