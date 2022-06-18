@@ -26,7 +26,7 @@ $ roscore
 
 Afterwards open a new ROS Command Window, and run:
 
-$ python3 c:\path\to\repository\test.py
+$ python3 -m unittest discover c:\path\to\repository
 
 This should start the tests.
 
@@ -34,7 +34,7 @@ This should start the tests.
 
 For any linux system running ROS, running the following command should anywhere be sufficient to run the tests
 
-$ python3 /path/to/repository/test.py
+$ python3 -m unittest discover /path/to/repository
 
 Once again, do make sure ros master is running.
 
