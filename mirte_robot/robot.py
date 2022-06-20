@@ -137,15 +137,19 @@ class Robot():
         self.get_pin_value_service = rospy.ServiceProxy('/mirte/get_pin_value', GetPinValue, persistent=True)
         self.set_pin_value_service = rospy.ServiceProxy('/mirte/set_pin_value', SetPinValue, persistent=True)
 
+        if rospy.has_param("/mirte/phone_imu"):
+            phone_imus = rospy.get_param("/mirte/phone_imu")
+            self.phone_imus_publishers = {}
+            for sensor in phone_imus:
+                self.phone_imus_publishers[sensor] = TopicSubscriber(
+                    '/mirte/phone_imu/' + phone_imus[sensor]["name"], Imu)
+
         if rospy.has_param("/mirte/phone_compass"):
             phone_compasses = rospy.get_param("/mirte/phone_compass")
             self.phone_compass_subscribers = {}
             for sensor in phone_compasses:
                 self.phone_compass_subscribers[sensor] = TopicSubscriber(
                     '/mirte/phone_compass/' + phone_compasses[sensor]["name"], Int32)
-        
-        if rospy.has_param("/mirte/imu"):
-            self.imu_sensor = TopicSubscriber('mirte/gyro', Imu)
 
         self.get_pin_value_service = rospy.ServiceProxy(
             '/mirte/get_pin_value', GetPinValue, persistent=True)
@@ -290,9 +294,9 @@ class Robot():
         value = self.phone_compass_subscribers[compass].getValue()
         return value.data
 
-    def getImuLinearAcceleration(self, axis):
-        imu = self.imu_sensor
-        data = imu.getValue().linear_acceleration
+    def getImuLinearAcceleration(self, imu, axis):
+        imu_instance = self.phone_imus_publishers[imu]
+        data = imu_instance.getValue().linear_acceleration
         x, y, z = data.x, data.y, data.z
         if axis == 'X':
             return x
@@ -303,28 +307,28 @@ class Robot():
         else:
             raise Exception("invalid axis!")
 
-    def getImuAngularVelocity(self, angle):
-        imu = self.imu_sensor
-        data = imu.getValue().angular_velocity
+    def getImuAngularVelocity(self, imu, axis):
+        imu_instance = self.phone_imus_publishers[imu]
+        data = imu_instance.getValue().angular_velocity
         x, y, z = data.x, data.y, data.z
-        if angle == 'X':
+        if axis == 'X':
             return x
-        elif angle == 'Y':
+        elif axis == 'Y':
             return y
-        elif angle == 'Z':
+        elif axis == 'Z':
             return z
         else:
             raise Exception("wrong input!")
 
-    def getImuRotation(self, angle):
-        imu = self.imu_sensor
-        q = imu.getValue().orientation
+    def getImuRotation(self, imu, axis):
+        imu_instance = self.phone_imus_publishers[imu]
+        q = imu_instance.getValue().orientation
         x, y, z = imu_math.euler_from_quaternion(q.x, q.y, q.z, q.w)
-        if angle == 'X':
+        if axis == 'X':
             return x
-        elif angle == 'Y':
+        elif axis == 'Y':
             return y
-        elif angle == 'Z':
+        elif axis == 'Z':
             return z
         else:
             raise Exception("wrong input!")
@@ -402,7 +406,7 @@ class Robot():
             the MCU will be used for timing of the servos. This timer therefore can not be
             used for PWM anymore. For Arduino Nano/Uno this means pins D9 and D10 will not
             have PWM anymore. For the SMT32 this means pins A1, A2, A3, A15, B3, B10, and B11
-            will not have PWM anymore.
+            will not have PWM any
 
         Warning:
             A maximum of 12 servos is supported.
