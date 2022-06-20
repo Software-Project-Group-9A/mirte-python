@@ -151,6 +151,12 @@ class Robot():
             for sensor in phone_imus:
                 self.phone_imus_publishers[sensor] = TopicSubscriber(
                     '/mirte/phone_imu/' + phone_buttons[sensor]["name"], Imu)
+        if rospy.has_param("/mirte/phone_compass"):
+            phone_compasses = rospy.get_param("/mirte/phone_compass")
+            self.phone_compass_subscribers = {}
+            for sensor in phone_compasses:
+                self.phone_compass_subscribers[sensor] = TopicSubscriber(
+                    '/mirte/phone_compass/' + phone_compasses[sensor]["name"], Int32)
 
         self.get_pin_value_service = rospy.ServiceProxy(
             '/mirte/get_pin_value', GetPinValue, persistent=True)
@@ -280,18 +286,38 @@ class Robot():
         value = self.phone_button_subscribers[button].getValue()
         return value.data
 
+
+<< << << < HEAD
     def getImuLinearAcceleration(self, imu, angle):
         imu_instance = self.phone_imus_publishers[imu]
         data = imu_instance.getValue().linear_acceleration
+== == == =
+    def getCompassValue(self, compass):
+        """Gets the direction of compass in degrees. 0 degrees is north, 90 degrees is east, etc.
+
+        Parameters:
+            compass (str): The name of the compass as specified in the settings.
+
+        Returns:
+            int: Value of compass.
+        """
+
+        value = self.phone_compass_subscribers[compass].getValue()
+        return value.data
+
+    def getImuLinearAcceleration(self, axis):
+        imu = self.imu_sensor
+        data = imu.getValue().linear_acceleration
+>>>>>> > dev
         x, y, z = data.x, data.y, data.z
-        if angle == 'X':
+        if axis == 'X':
             return x
-        elif angle == 'Y':
+        elif axis == 'Y':
             return y
-        elif angle == 'Z':
+        elif axis == 'Z':
             return z
         else:
-            raise Exception("wrong input!")
+            raise Exception("invalid axis!")
 
     def getImuAngularVelocity(self, imu, angle):
         imu_instance = self.phone_imus_publishers[imu]
