@@ -145,8 +145,12 @@ class Robot():
                 self.phone_button_subscribers[sensor] = TopicSubscriber(
                     '/mirte/phone_button/' + phone_buttons[sensor]["name"], Bool)
 
-        if rospy.has_param("/mirte/imu"):
-            self.imu_sensor = TopicSubscriber('mirte/gyro', Imu)
+        if rospy.has_param("/mirte/phone_imu"):
+            phone_imus = rospy.get_param("/mirte/phone_imu")
+            self.phone_imus_publishers = {}
+            for sensor in phone_imus:
+                self.phone_imus_publishers[sensor] = TopicSubscriber(
+                    '/mirte/phone_imu/' + phone_buttons[sensor]["name"], Imu)
 
         self.get_pin_value_service = rospy.ServiceProxy(
             '/mirte/get_pin_value', GetPinValue, persistent=True)
@@ -276,9 +280,9 @@ class Robot():
         value = self.phone_button_subscribers[button].getValue()
         return value.data
 
-    def getImuLinearAcceleration(self, angle):
-        imu = self.imu_sensor
-        data = imu.getValue().linear_acceleration
+    def getImuLinearAcceleration(self, imu, angle):
+        imu_instance = self.phone_imus_publishers[imu]
+        data = imu_instance.getValue().linear_acceleration
         x, y, z = data.x, data.y, data.z
         if angle == 'X':
             return x
@@ -289,9 +293,9 @@ class Robot():
         else:
             raise Exception("wrong input!")
 
-    def getImuAngularVelocity(self, angle):
-        imu = self.imu_sensor
-        data = imu.getValue().angular_velocity
+    def getImuAngularVelocity(self, imu, angle):
+        imu_instance = self.phone_imus_publishers[imu]
+        data = imu_instance.getValue().angular_velocity
         x, y, z = data.x, data.y, data.z
         if angle == 'X':
             return x
@@ -303,8 +307,8 @@ class Robot():
             raise Exception("wrong input!")
 
     def getImuRotation(self, angle):
-        imu = self.imu_sensor
-        q = imu.getValue().orientation
+        imu_instance = self.phone_imus_publishers[imu]
+        q = imu_instance.getValue().orientation
         x, y, z = imu_math.euler_from_quaternion(q.x, q.y, q.z, q.w)
         if angle == 'X':
             return x
