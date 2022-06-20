@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import time
+from xml.etree.ElementTree import QName
 import rospy
 import rosservice
 import signal
@@ -17,11 +18,13 @@ from std_msgs.msg import Int32
 from std_msgs.msg import Bool
 from std_msgs.msg import String
 from std_msgs.msg import Empty
+from sensor_msgs.msg import CompressedImage
 from sensor_msgs.msg import Imu
 from mirte_msgs.msg import *
 from mirte_robot import imu_math
 from mirte_msgs.srv import *
 from std_srvs.srv import *
+import phone
 
 mirte = {}
 
@@ -130,20 +133,9 @@ class Robot():
             for sensor in keypad_sensors:
                 self.keypad_services[sensor] = rospy.ServiceProxy(
                     '/mirte/get_keypad_' + keypad_sensors[sensor]["name"], GetKeypad, persistent=True)
-
-        if rospy.has_param("/mirte/phone_slider"):
-            phone_sliders = rospy.get_param("/mirte/phone_slider")
-            self.phone_slider_subscribers = {}
-            for sensor in phone_sliders:
-                self.phone_slider_subscribers[sensor] = TopicSubscriber(
-                    '/mirte/phone_slider/' + phone_sliders[sensor]["name"], Int32)
-
-        if rospy.has_param("/mirte/phone_button"):
-            phone_buttons = rospy.get_param("/mirte/phone_button")
-            self.phone_button_subscribers = {}
-            for sensor in phone_buttons:
-                self.phone_button_subscribers[sensor] = TopicSubscriber(
-                    '/mirte/phone_button/' + phone_buttons[sensor]["name"], Bool)
+        
+        self.get_pin_value_service = rospy.ServiceProxy('/mirte/get_pin_value', GetPinValue, persistent=True)
+        self.set_pin_value_service = rospy.ServiceProxy('/mirte/set_pin_value', SetPinValue, persistent=True)
 
         if rospy.has_param("/mirte/phone_compass"):
             phone_compasses = rospy.get_param("/mirte/phone_compass")
@@ -162,6 +154,8 @@ class Robot():
 
         signal.signal(signal.SIGINT, self._signal_handler)
         signal.signal(signal.SIGTERM, self._signal_handler)
+
+        self.phone = createPhone()
 
     def getTimestamp(self):
         """Gets the elapsed time in seconds since the initialization fo the Robot.
@@ -440,7 +434,7 @@ class Robot():
         """
 
         motor = self.motor_services[motor](value)
-        return motor.status
+        return motor.status 
 
     def stop(self):
         """Stops all DC motors defined in the configuration
