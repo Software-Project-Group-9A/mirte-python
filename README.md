@@ -4,7 +4,7 @@ This package provides the API for the Mirte Robot. Please read the Mirte documen
 
 # IMPORTANT: Mirte Phone API
 
-This package was expanded with a Phone api, for interacting with the components made available through mirtesensorlib
+This package was expanded with a Phone API for interacting with the components made available through [mirtesensorlib](https://github.com/Software-Project-Group-9A/mirte-sensor-lib).
 
 New functionality can be found in mirte_robot/phone.py
 
@@ -22,11 +22,15 @@ For windows, please see this guide for installing ROS: http://wiki.ros.org/Insta
 
 Once ROS has been installed, open the ROS Command Window shortcut from the guide, and run:
 
+```shell
 $ roscore
+```
 
 Afterwards open a new ROS Command Window, and run:
 
+```shell
 $ python3 -m unittest discover c:\path\to\repository
+```
 
 This should start the tests.
 
@@ -34,7 +38,9 @@ This should start the tests.
 
 For any linux system running ROS, running the following command should anywhere be sufficient to run the tests
 
+```shell
 $ python3 -m unittest discover /path/to/repository
+```
 
 Once again, do make sure ros master is running.
 
